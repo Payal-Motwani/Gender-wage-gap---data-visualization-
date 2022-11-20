@@ -1,0 +1,220 @@
+---
+title: "Gender Wage Gap"
+author: "Payal Motwani"
+date: "2022-10-04"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+<style>
+body {
+text-align: justify}
+</style>
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+```
+
+# Are Women still earning less than Men?
+#### The Equal Pay Act of 1963 require that men and women in the same workplace should be given equal pay, even after almost half a century of passing the act, a persisitent pay gap still exists. So, what exactly is gender pay gap ? What are tha major demographics that lead to these wage gaps? 
+
+## What is the gender wage gap?
+#### The gender wage gap refers to the difference in earnings between women and men.This is calculated as the ratio of median annual earnings for women working full time, year round to those of their male counterparts. According to the data collected from U.S Bureau of Labor Statistics for 2020, women earned 82.3% as compared to their male counterparts. In simple terms that means, when a man earned 1$ for a certain work, women were paid 82 cents for the same work. The chart below highlights gender pay gap from 1979 to 2020.
+
+```{r, echo=FALSE, warning=FALSE,error=FALSE,message=FALSE}
+##Loading data
+library(xlsx)
+library(openxlsx)
+library(dplyr)
+library(magrittr)
+library(ggrepel)
+year_data <- read.xlsx("womens-earnings-tables-2020.xlsx", 3, 
+                       startRow = 4)
+## Cleaning and Labeling correctly
+colnames(year_data) <- c("Year","Grand_Total", 
+                         "Total.16-24","16-19","20-24",
+                         "Total_25_and_older","25-34",
+                         "35-44","45-54","55-64","65_and_older")
+library(ggplot2)
+max_x <- max(year_data$Year)
+min_x <- min(year_data$Year)
+df_poly_above <- year_data %>%
+  tibble::add_row(Year = c(max_x, min_x),
+                  Grand_Total = c(Inf, Inf))
+
+par(mfrow=c(1,2))
+
+ggplot(year_data, aes(x = Year, y = Grand_Total))+
+  geom_line()+
+  ylim(0,100)+
+  theme_classic()+
+  geom_polygon(data = df_poly_above,
+               aes(x = Year, y = Grand_Total),
+               fill = "red",
+               alpha = 1/5)+
+  labs(title ="Gender Pay Gap since 1979",
+       subtitle = "This chart explains that when a Men earns 100$, 
+       how much would a Women earn for same work ")+
+  ylab("Percentage of Women earnings Vs Men")+
+  geom_label(data= year_data %>% 
+               filter(Year== 1979 | Grand_Total == 82.3),
+             aes(label=Grand_Total))
+
+
+ggplot(year_data, aes(x = Year, y = Grand_Total))+
+  geom_line()+
+  ylim(60,100)+
+  theme_classic()+
+  geom_polygon(data = df_poly_above,
+               aes(x = Year, y = Grand_Total),
+               fill = "red",
+               alpha = 1/5)+
+  labs(title ="Gender Pay Gap since 1979",
+       subtitle = "This chart explains that when a Men earns 100$, 
+       how much would a Women earn for same work ")+
+  ylab("Percentage of Women earnings Vs Men")+
+  geom_label(data= year_data %>% 
+               filter(Year== 1979 | Grand_Total == 82.3),
+             aes(label=Grand_Total))
+
+```
+
+#### The Gender pay gap has narrowed since 1979, but still huge gap remains.  The narrowing of the gap is attributable to Women's progress in education, increased participation in workforce etc.\
+#### The pay gap varies from state to state, too. Largely because of those individual states' economies and laws of the states. States whose primary industries tend to be male-dominated ones have wider pay gaps, some states take extra efforts for supporting women in workplace. The map below shows 2020 data of gender pay gap according to states.
+
+```{r, echo=FALSE, warning=FALSE,error=FALSE,message=FALSE}
+library(usmap)
+
+
+state_data <-  read.xlsx("womens-earnings-tables-2020.xlsx", 5, 
+                       startRow = 4)
+##Cleaning state data
+state_data <- state_data[-1,c(1,6,9,11)]
+colnames(state_data) <- c("state","Women_medianpay", "Men_medianpay",
+                          "Pay_gap")
+state_data <- data.frame(state_data)
+
+subset <- data.frame(state_data[,c(1,4)])
+plot_usmap(data = subset, fips = "States", values = "Pay_gap") + 
+  scale_fill_continuous(low = "#FFFAF0", high = "#DA2C43", 
+    name = "Pay gap 2020", label = scales::comma)+
+   theme(panel.background=element_blank())+
+  labs(title = "Women Income as percent of Men Income by 
+       state, 2020")+
+  theme(legend.position = "bottom")
+  
+
+subset2 <- subset %>%
+  arrange(desc(Pay_gap)) %>%
+  slice(1:5, (n()-4):n(), with_ties = FALSE)
+
+legend_ord <- levels(with(subset2, reorder(state, -Pay_gap)))
+
+ggplot(subset2, aes(y= reorder(state, Pay_gap), x = Pay_gap,
+                    fill = state))+
+  geom_bar(stat = "identity")+
+  scale_fill_manual(breaks = legend_ord, values = 
+                      c("#DA2C43", "#E15566", "#E15566",
+                               "#E97E88","#E97E88", "#F0A8AB",
+                               "#F0A8AB","#F8D1CD","#F8D1CD",
+                               "#FFFAF0"))+
+  theme_classic()+
+  geom_text(aes(label = Pay_gap), vjust = 1.5,
+            position = position_dodge(0.5), size = 4)+
+  labs(title = "Best 5 vs Worst 5 states in Gender Pay Gap Rate")+
+  ylab("states")+
+  xlab("Pay Gap Percentage")+
+  theme(legend.position = "none")
+                
+
+
+```
+
+#### Every U.S stae has gender pay gap, some states have wider gaps than other. Conneticut has smallest wage gap in 2020,where women earned as much as 97% of what men earned.Connecticut has been most active in ensuring to close the gap, it enacted a new  Pay transparency laws to promote pay equality. California, New Mexico, Texas, Wisconsin are also top 5 states coming closer to achieve gender pay parity.
+
+#### On the opposite side, worst state for gender parity was Utah(72.7%), followed by Louisiana(74.2%), Wyoming(75.2%), Idaho(75.7%) and Maine(76.6%). There could be many reasons for these states to have such high gaps, such as prevelance of male dominated industries in these regions. Motherhood and family responbilities also add upto the gap.Utah has one of the highest fertility rates in the nation, and studies show that women who take time off to raise children make less money. Four in 10 Utah women work part time – the highest percentage of any state in the country, Likewise in Wyoming Female-dominated jobs , like teaching, tended to pay less than the national average, while male-dominated jobs in Wyoming, like construction and mining, tended to pay the same as or more than the national average.
+
+#### The pay gap is persisitent accross women from all backgrounds, at all ages, and of all levels of educational achievement, although gap vary depending on a woman’s individual situation. Certain race and etnicities have suffered more because of the wage gaps.
+
+```{r, echo=FALSE, warning=FALSE,error=FALSE,message=FALSE}
+library(tidyr)
+race_data <- read.xlsx("womens-earnings-tables-2020.xlsx", 1, 
+                       startRow = 18)
+##cleaning data and renaming
+race_data1 <- race_data[c(1:4),c(6,9,11)]
+rownames(race_data1) <- c("White","African_American",
+                          "Asian","Hispanic")
+colnames(race_data1) <- c("Women_Median_Pay",
+                          "Men_median_pay","Pay_gap")
+race_data1$race <- rownames(race_data1)
+
+df <- gather(race_data1, gender, total,
+             Men_median_pay:Women_Median_Pay)
+df <- df[,c(2,3,4,1)]
+
+ggplot(df, aes(x =race, y= total, fill = gender))+
+  geom_bar(stat = "identity", position = 'dodge')+
+  scale_fill_brewer(palette = "Set1")+
+  geom_text(aes(label = Pay_gap), vjust = 1.5,
+            position = position_dodge(.9), size = 4)+
+  theme_classic()+
+  labs(title = "Median weekly earnings of Women Vs Men, 2020 by 
+       Race/Ethinicty")+
+  ylab("Median Earnings")+
+  xlab("Race/Ethinicity")
+  
+
+```
+
+#### Here the comparison is between men and women of same race, Asian women tend to earn only 79% of what Asian men earn. African american women had smallest wage gap, among all races but this doesn't tend to mitigate the effect, median earnings of women are lesser than men. In absolute terms Hispanic women earned least of all in the groups.
+
+#### Earnings for both Women and Men workers tend to increase with age. As workers grow older and progress in their careers, median earnings for women grow more slowly than median earnings for men, resulting in larger gaps for women.
+
+```{r, echo=FALSE, warning=FALSE,error=FALSE,message=FALSE}
+library("stringr") 
+age_data <- read.xlsx("womens-earnings-tables-2020.xlsx", 1, 
+                       startRow = 8)
+
+
+age_data1 <- age_data[c(1,2,4,5,6,7,8), c(1,6,9,11)]
+colnames(age_data1) <- c("Age","Women_Median_Pay",
+                          "Men_median_pay","Pay_gap")
+
+df1 <- gather(age_data1, gender, total,
+             Men_median_pay:Women_Median_Pay)
+df1 <- df1[,c(1,4,2,3)]
+
+df1$gender <- as.factor(df1$gender)
+ggplot(df1, aes(x =Age,
+                y= total, group = gender))+
+  geom_line(aes(color = gender))+
+  geom_area(aes(fill = gender, group = gender),
+              alpha = 0.5, position = 'identity')+
+  scale_fill_brewer(palette = "Set1")+
+  theme_classic()+
+  labs(title = "Median weekly earnings of Women Vs Men by Age, 2020")+
+  ylab("Median Earnings")+
+  xlab("Age")+
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 5))
+  
+
+
+```
+
+
+#### While the gender pay gap is narrower for younger women because of increase in their education level and break into occupations traditionally dominated by men, Women of higher age still are suffering from the discrimination.
+
+#### Although progress is being made towards equal pay, road ahead is still long. Statistics clearly show that women experience wage gap in every state at every age, across all ethnic and racial groups. This gap is a result of gender norms and biases that have been in existence since ages. There are other natural factors that tend to exacerbate the situation like motherhood breaks, juggle between family responbilities and so on. 
+
+#### Equal pay requires addressing all of the causes of the gap by changing cultural norms, improving employer behavior, and implementing public policy initiatives along with efforts of women at individual levels. On individual level, women can contribute to equal pay by researching pay in their industry and occupation and negotiating salaries and raises more often.
+
+
+###### Methodology: Pay gap data used in this analysis is from the U.S. Bureau of Labor Statistics. The data provides estimates of median weekly earnings for men and women based on the U.S. Census Bureau's Current Population Survey
+###### Link to data : https://www.bls.gov/cps/demographics.htm#women
+###### References: https://www.pewresearch.org/fact-tank/2021/05/25/gender-pay-gap-facts/
+###### https://www.usnews.com/news/best-states/articles/2019-04-02/states-with-largest-and-smallest-gender-pay-gap
+
+
+
